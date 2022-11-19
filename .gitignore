@@ -22,3 +22,4 @@ go.work
 
 # Compiled executable
 /worklog
+worklog.db

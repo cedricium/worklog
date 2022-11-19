@@ -1,17 +1,19 @@
 package main
 
 import (
+	"database/sql"
 	"fmt"
 	"log"
 	"os"
 	"strings"
 	"time"
 
+	_ "github.com/mattn/go-sqlite3"
 	"github.com/teris-io/shortid"
 	"github.com/urfave/cli/v2"
 )
 
-const ISO8601 = "2006-01-02 15:04:05"
+const ISO8601 string = "2006-01-02 15:04:05"
 
 type Entry struct {
 	ID        string
@@ -21,7 +23,36 @@ type Entry struct {
 	Message   string
 }
 
+const (
+	db_filename string = "worklog.db"
+
+	initialize_db string = `
+CREATE TABLE IF NOT EXISTS entries (
+	id 				TEXT NOT NULL PRIMARY KEY,
+	timestamp DATETIME NOT NULL,
+	important INTEGER NOT NULL DEFAULT 0,
+	category 	TEXT NOT NULL DEFAULT 'note',
+	message 	TEXT NOT NULL
+);`
+	insert_entry string = `
+INSERT INTO entries(id, timestamp, important, category, message) values(?, ?, ?, ?, ?);
+`
+	list_sorted string = `
+SELECT * FROM entries ORDER BY timestamp DESC;
+`
+)
+
 func main() {
+	db, err := sql.Open("sqlite3", db_filename)
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer db.Close()
+
+	if _, err := db.Exec(initialize_db); err != nil {
+		log.Fatal(err)
+	}
+
 	categories := []string{"bug", "feature", "fix", "meeting", "note", "refactor"}
 
 	app := &cli.App{
@@ -46,6 +77,10 @@ func main() {
 						importantIndicator = "*"
 					}
 
+					if _, err := db.Exec(insert_entry, entry.ID, entry.Timestamp.Format(ISO8601), entry.Important, entry.Category, entry.Message); err != nil {
+						log.Fatal(err)
+						return err
+					}
 					fmt.Printf("%v\t%v\t%v  [%v]\t\t'%v'\n", entry.Timestamp.Format(ISO8601), entry.ID, importantIndicator, entry.Category, entry.Message)
 					return nil
 				},
@@ -82,7 +117,26 @@ func main() {
 				Name:  "list",
 				Usage: "Show recorded entries",
 				Action: func(ctx *cli.Context) error {
-					fmt.Println("TODO")
+					rows, err := db.Query(list_sorted)
+					if err != nil {
+						return err
+					}
+					defer rows.Close()
+
+					for rows.Next() {
+						entry := Entry{}
+						err = rows.Scan(&entry.ID, &entry.Timestamp, &entry.Important, &entry.Category, &entry.Message)
+						if err != nil {
+							return err
+						}
+
+						importantIndicator := " "
+						if entry.Important {
+							importantIndicator = "*"
+						}
+						fmt.Printf("%v\t%v\t%v  [%v]\t\t'%v'\n", entry.Timestamp.Format(ISO8601), entry.ID, importantIndicator, entry.Category, entry.Message)
+					}
+
 					return nil
 				},
 			},
