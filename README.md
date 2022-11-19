@@ -1,4 +1,4 @@
-# worklog
+# worklog 📝
 
 An opinionated note-taking tool for the developer's day-to-day.
 
