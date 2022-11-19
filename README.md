@@ -33,8 +33,8 @@ Add entries to the log.
 $ worklog add --help
 
 EXAMPLES
-$ worklog add -m "struggling with GraphQL"
-$ worklog add -c fix -im "solved the >1000 RPCs causing Twitter being slow"
+  $ worklog add -m "struggling with GraphQL"
+  $ worklog add -c fix -im "solved the >1000 RPCs causing Twitter being slow"
 
 OPTIONS
   -m, --message=<MSG>
@@ -67,7 +67,7 @@ OPTIONS
     warrants special attention when reviewing entries later.
 ```
 
-### `$ worklog add`
+### `$ worklog list`
 
 Show recorded entries. Current idea is for output to look similar to `git log`.
 
