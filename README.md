@@ -10,7 +10,42 @@ Wouldn't it be nice if there was a way to simply and quickly document one's day-
 
 Inspired by `git`, I envision a CLI tool and package for documenting and parsing: tasks, notes, meetings, bug fixes, etc., automatically grouped by day in order to maintain a record of the day-to-day on the job.
 
-## Usage
+## Getting Started
+
+### Build
+
+We can use `make` to run common/frequent commands, such as building an executable and cleaning the project.
+
+```console
+$ make
+```
+
+This will compile an up-to-date executable called `worklog` in the root directory based on the latest code changes from `cmd/worklog/main.go`. To use, see next section.
+
+### Run
+
+```console
+$ ./worklog
+NAME:
+   worklog - An opinionated note-taking tool for the developer's day-to-day.
+
+USAGE:
+   worklog [global options] command [command options] [arguments...]
+
+VERSION:
+   0.0.1
+
+COMMANDS:
+   add      Add entries to the log
+   list     Show recorded entries
+   help, h  Shows a list of commands or help for one command
+
+GLOBAL OPTIONS:
+   --help, -h     show help (default: false)
+   --version, -v  print the version (default: false)
+```
+
+## Desired Usage
 
 This is a work-in-progress and currently being used to drive development. Very likely to change in the future.
 
