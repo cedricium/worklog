@@ -4,7 +4,7 @@ An opinionated note-taking tool for the developer's day-to-day.
 
 ## Idea
 
-After working at Hellosaurus for two years, I can only remember the big features I built. But what about the tricky bugs solved, legacy code rewrites, or instrumental meetings attended? Those moments, arguably just as important as feature work, stuck somewhere in memory though seemingly inaccessible forever.
+After working at Hellosaurus for two years, I can really only remember the big features I built. But what about the tricky bugs solved, legacy code rewrites, or instrumental meetings attended? Those moments, arguably just as important as feature work, stuck somewhere in memory though seemingly inaccessible forever.
 
 Wouldn't it be nice if there was a way to simply and quickly document one's day-to-day while at work? Something akin to the captain's log in Star Trek, with a way for easy perusal at a later time.
 
@@ -33,10 +33,14 @@ Add entries to the log.
 $ worklog add --help
 
 EXAMPLES
-$ worklog add --c fix -it "solved the >1000 RPCs causing Twitter being slow"
-$ worklog add -t "struggling with GraphQL" -d 2022-06-05
+$ worklog add -m "struggling with GraphQL"
+$ worklog add -c fix -im "solved the >1000 RPCs causing Twitter being slow"
 
 OPTIONS
+  -m, --message=<MSG>
+    Use the given <MSG> as the entry body. No limit on length for now, though
+    ideally should be kept short (think tweet size).
+
   -c, --category={bug|fix|feature|meeting|note|refactor}
     Choose a category for the entry. Variants are as follows:
 
@@ -58,14 +62,9 @@ OPTIONS
     refactor
       Legacy code rewrites or code improvements/enhancements.
 
-  -d, --date=<date>
-    Override the default date (default being NOW) for the entry being recorded. Needs to be an ISO 8601-like date string (e.g., "2022-11-04").
-
   -i, --important
-    Mark/flag the entry as important. Useful if entry is a known "big-deal" and warrants special attention when reviewing entries later.
-
-  -t, --text=<txt>
-    Use the given <txt> as the entry body. No limit on length for now, though ideally should be kept short (think tweet size).
+    Mark/flag the entry as important. Useful if entry is a known "big-deal" and
+    warrants special attention when reviewing entries later.
 ```
 
 ### `$ worklog add`
@@ -76,9 +75,9 @@ Show recorded entries. Current idea is for output to look similar to `git log`.
 $ worklog list --help
 
 EXAMPLES
-  $ worklog list # show all entries from newest to oldest
-  $ worklog list --before="2022-01-01" # show entries recorded before January 1, 2022.
-  $ worklog list --filter=FGR # show only entries categorized as Fixes (F), Features (G), and Refactors (R)
+  $ worklog list
+  $ worklog list --before="2022-01-01"
+  $ worklog list --filter=FGR --after="2022-06-05"
 
 OPTIONS
   -f, --filter=[(B|F|G|M|N|R|I)…[*]]
