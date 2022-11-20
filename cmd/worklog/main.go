@@ -73,113 +73,113 @@ func main() {
 		Usage:                  "An opinionated note-taking tool for the developer's day-to-day.",
 		Version:                "0.0.1",
 		UseShortOptionHandling: true,
-		Commands: []*cli.Command{
-			{
-				Name:  "add",
-				Usage: "Add entries to the log",
-				Action: func(c *cli.Context) error {
-					entry := Entry{
-						ID:        shortid.MustGenerate(),
-						Timestamp: time.Now(),
-						Category:  c.String("category"),
-						Important: c.Bool("important"),
-						Message:   c.String("message"),
-					}
+	}
+	app.Commands = []*cli.Command{
+		{
+			Name:  "add",
+			Usage: "Add entries to the log",
+			Action: func(c *cli.Context) error {
+				entry := Entry{
+					ID:        shortid.MustGenerate(),
+					Timestamp: time.Now(),
+					Category:  c.String("category"),
+					Important: c.Bool("important"),
+					Message:   c.String("message"),
+				}
 
-					_, err = db.Exec(insertStmt, entry.ID, entry.Timestamp.Format(ISO8601),
-						entry.Important, entry.Category, entry.Message)
-					if err != nil {
-						log.Fatal(err)
-					}
+				_, err = db.Exec(insertStmt, entry.ID, entry.Timestamp.Format(ISO8601),
+					entry.Important, entry.Category, entry.Message)
+				if err != nil {
+					log.Fatal(err)
+				}
 
-					fmt.Println(entry)
-					return nil
+				fmt.Println(entry)
+				return nil
+			},
+			Flags: []cli.Flag{
+				&cli.StringFlag{
+					Name:     "message",
+					Aliases:  []string{"m"},
+					Usage:    "Use the given `MSG` as the entry body",
+					Required: true,
 				},
-				Flags: []cli.Flag{
-					&cli.StringFlag{
-						Name:     "message",
-						Aliases:  []string{"m"},
-						Usage:    "Use the given `MSG` as the entry body",
-						Required: true,
-					},
-					&cli.StringFlag{
-						Name:    "category",
-						Aliases: []string{"c"},
-						Usage: fmt.Sprintf("Choose a category for the entry. `TAG` must be one of: %v",
-							"["+strings.Join(categories, "|")+"]"),
-						Value: "note",
-						Action: func(ctx *cli.Context, input string) error {
-							for _, valid := range categories {
-								if input == valid {
-									return nil
-								}
+				&cli.StringFlag{
+					Name:    "category",
+					Aliases: []string{"c"},
+					Usage: fmt.Sprintf("Choose a category for the entry. `TAG` must be one of: %v",
+						"["+strings.Join(categories, "|")+"]"),
+					Value: "note",
+					Action: func(ctx *cli.Context, input string) error {
+						for _, valid := range categories {
+							if input == valid {
+								return nil
 							}
-							return fmt.Errorf("flag category value '%v' is not valid. options are: %v",
-								input, "["+strings.Join(categories, "|")+"]")
-						},
+						}
+						return fmt.Errorf("flag category value '%v' is not valid. options are: %v",
+							input, "["+strings.Join(categories, "|")+"]")
 					},
-					&cli.BoolFlag{
-						Name:    "important",
-						Aliases: []string{"i"},
-						Usage:   "Mark/flag the entry as important",
-						Value:   false,
-					},
+				},
+				&cli.BoolFlag{
+					Name:    "important",
+					Aliases: []string{"i"},
+					Usage:   "Mark/flag the entry as important",
+					Value:   false,
 				},
 			},
-			{
-				Name:  "list",
-				Usage: "Show recorded entries",
-				Action: func(ctx *cli.Context) error {
-					rows, err := db.Query(listStmt)
+		},
+		{
+			Name:  "list",
+			Usage: "Show recorded entries",
+			Action: func(ctx *cli.Context) error {
+				rows, err := db.Query(listStmt)
+				if err != nil {
+					return err
+				}
+				defer rows.Close()
+
+				for rows.Next() {
+					entry := Entry{}
+					err = rows.Scan(&entry.ID, &entry.Timestamp, &entry.Important,
+						&entry.Category, &entry.Message)
 					if err != nil {
 						return err
 					}
-					defer rows.Close()
 
-					for rows.Next() {
-						entry := Entry{}
-						err = rows.Scan(&entry.ID, &entry.Timestamp, &entry.Important,
-							&entry.Category, &entry.Message)
-						if err != nil {
-							return err
-						}
+					fmt.Println(entry)
+				}
 
-						fmt.Println(entry)
-					}
-
-					return nil
+				return nil
+			},
+		},
+		{
+			Name:  "clear",
+			Usage: "Delete all recorded entries",
+			Flags: []cli.Flag{
+				&cli.BoolFlag{
+					Name:    "force",
+					Aliases: []string{"f"},
+					Usage:   "Skip confirmation and forcefully delete all entries.",
+					Value:   false,
 				},
 			},
-			{
-				Name:  "clear",
-				Usage: "Delete all recorded entries",
-				Flags: []cli.Flag{
-					&cli.BoolFlag{
-						Name:    "force",
-						Aliases: []string{"f"},
-						Usage:   "Skip confirmation and forcefully delete all entries.",
-						Value:   false,
-					},
-				},
-				Action: func(ctx *cli.Context) error {
-					force := ctx.Bool("force")
-					if !force {
-						fmt.Print(clearWarning)
+			Action: func(ctx *cli.Context) error {
+				force := ctx.Bool("force")
+				if !force {
+					fmt.Print(clearWarning)
 
-						var input string
-						fmt.Scanln(&input)
-						if input != "continue" {
-							return fmt.Errorf("input value '%v' does not match 'continue'", input)
-						}
+					var input string
+					fmt.Scanln(&input)
+					if input != "continue" {
+						return fmt.Errorf("input value '%v' does not match 'continue'", input)
 					}
+				}
 
-					_, err = db.Exec(clearStmt)
-					if err != nil {
-						log.Fatal(err)
-					}
+				_, err = db.Exec(clearStmt)
+				if err != nil {
+					log.Fatal(err)
+				}
 
-					return nil
-				},
+				return nil
 			},
 		},
 	}
