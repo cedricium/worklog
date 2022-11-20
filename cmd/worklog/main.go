@@ -1,7 +1,6 @@
 package main
 
 import (
-	"database/sql"
 	"fmt"
 	"log"
 	"os"
@@ -9,7 +8,6 @@ import (
 	"time"
 
 	_ "github.com/mattn/go-sqlite3"
-	"github.com/teris-io/shortid"
 	"github.com/urfave/cli/v2"
 )
 
@@ -35,62 +33,13 @@ func (entry Entry) String() string {
 		entry.ID, importantIndicator, entry.Category, entry.Message)
 }
 
-const (
-	dbFile string = "worklog.db"
-
-	initializeStmt string = `CREATE TABLE IF NOT EXISTS entries (
-	id TEXT NOT NULL PRIMARY KEY,
-	timestamp DATETIME NOT NULL,
-	important INTEGER NOT NULL DEFAULT 0,
-	category TEXT NOT NULL DEFAULT 'note',
-	message TEXT NOT NULL
-);`
-	insertStmt string = `INSERT INTO entries(id, timestamp, important, category, message) values(?, ?, ?, ?, ?);`
-	listStmt   string = `SELECT * FROM entries ORDER BY timestamp DESC;`
-	clearStmt  string = `DELETE FROM entries;`
-)
-
-const (
-	clearWarning string = `CAUTION! This is a destructive action and connect be
-undone. If you wish to proceed, please type 'continue':
-
-> `
-)
-
-func configureAndSetupDB() (db *sql.DB) {
-	db, err := sql.Open("sqlite3", dbFile)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	_, err = db.Exec(initializeStmt)
-	if err != nil {
-		log.Fatal(err)
-	}
-	return db
-}
-
-func configureCommands(db *sql.DB) []*cli.Command {
+func configureCommands(client *Client) []*cli.Command {
 	return []*cli.Command{
 		{
 			Name:  "add",
 			Usage: "Add entries to the log",
-			Action: func(c *cli.Context) error {
-				entry := Entry{
-					ID:        shortid.MustGenerate(),
-					Timestamp: time.Now(),
-					Category:  c.String("category"),
-					Important: c.Bool("important"),
-					Message:   c.String("message"),
-				}
-
-				if _, err := db.Exec(insertStmt, entry.ID, entry.Timestamp.Format(ISO8601),
-					entry.Important, entry.Category, entry.Message); err != nil {
-					log.Fatal(err)
-				}
-
-				fmt.Println(entry)
-				return nil
+			Action: func(ctx *cli.Context) error {
+				return client.Add(ctx)
 			},
 			Flags: []cli.Flag{
 				&cli.StringFlag{
@@ -127,23 +76,7 @@ func configureCommands(db *sql.DB) []*cli.Command {
 			Name:  "list",
 			Usage: "Show recorded entries",
 			Action: func(ctx *cli.Context) error {
-				rows, err := db.Query(listStmt)
-				if err != nil {
-					return err
-				}
-				defer rows.Close()
-
-				for rows.Next() {
-					entry := Entry{}
-					if err := rows.Scan(&entry.ID, &entry.Timestamp, &entry.Important,
-						&entry.Category, &entry.Message); err != nil {
-						return err
-					}
-
-					fmt.Println(entry)
-				}
-
-				return nil
+				return client.List(ctx)
 			},
 		},
 		{
@@ -158,36 +91,24 @@ func configureCommands(db *sql.DB) []*cli.Command {
 				},
 			},
 			Action: func(ctx *cli.Context) error {
-				force := ctx.Bool("force")
-				if !force {
-					fmt.Print(clearWarning)
-
-					var input string
-					fmt.Scanln(&input)
-					if input != "continue" {
-						return fmt.Errorf("input value '%v' does not match 'continue'", input)
-					}
-				}
-
-				if _, err := db.Exec(clearStmt); err != nil {
-					log.Fatal(err)
-				}
-
-				return nil
+				return client.Clear(ctx)
 			},
 		}}
 }
 
 func main() {
-	db := configureAndSetupDB()
-	defer db.Close()
+	client := Client{}
+	if err := client.Initialize(); err != nil {
+		log.Fatal(err)
+	}
+	defer client.Database.Close()
 
 	app := &cli.App{
 		Name:                   "worklog",
 		Usage:                  "An opinionated note-taking tool for the developer's day-to-day.",
 		Version:                "0.0.1",
 		UseShortOptionHandling: true,
-		Commands:               configureCommands(db),
+		Commands:               configureCommands(&client),
 	}
 
 	if err := app.Run(os.Args); err != nil {
