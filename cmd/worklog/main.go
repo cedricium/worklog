@@ -23,33 +23,46 @@ type Entry struct {
 	Message   string
 }
 
-const (
-	db_filename string = "worklog.db"
+func (entry Entry) String() string {
+	importantIndicator := " "
+	if entry.Important {
+		importantIndicator = "*"
+	}
 
-	initialize_db string = `
-CREATE TABLE IF NOT EXISTS entries (
+	return fmt.Sprintf("%v\t%v\t%v  [%v]\t'%v'", entry.Timestamp.Format(ISO8601), entry.ID, importantIndicator, entry.Category, entry.Message)
+}
+
+const (
+	dbFile string = "worklog.db"
+
+	initializeStmt string = `CREATE TABLE IF NOT EXISTS entries (
 	id 				TEXT NOT NULL PRIMARY KEY,
 	timestamp DATETIME NOT NULL,
 	important INTEGER NOT NULL DEFAULT 0,
 	category 	TEXT NOT NULL DEFAULT 'note',
 	message 	TEXT NOT NULL
 );`
-	insert_entry string = `
-INSERT INTO entries(id, timestamp, important, category, message) values(?, ?, ?, ?, ?);
-`
-	list_sorted string = `
-SELECT * FROM entries ORDER BY timestamp DESC;
-`
+	insertStmt string = `INSERT INTO entries(id, timestamp, important, category, message) values(?, ?, ?, ?, ?);`
+	listStmt   string = `SELECT * FROM entries ORDER BY timestamp DESC;`
+	clearStmt  string = `DELETE FROM entries;`
+)
+
+const (
+	clearWarning string = `CAUTION! This is a destructive action and connect be
+undone. If you wish to proceed, please type 'continue':
+
+> `
 )
 
 func main() {
-	db, err := sql.Open("sqlite3", db_filename)
+	db, err := sql.Open("sqlite3", dbFile)
 	if err != nil {
 		log.Fatal(err)
 	}
 	defer db.Close()
 
-	if _, err := db.Exec(initialize_db); err != nil {
+	_, err = db.Exec(initializeStmt)
+	if err != nil {
 		log.Fatal(err)
 	}
 
@@ -72,16 +85,12 @@ func main() {
 						Message:   c.String("message"),
 					}
 
-					importantIndicator := " "
-					if entry.Important {
-						importantIndicator = "*"
+					_, err = db.Exec(insertStmt, entry.ID, entry.Timestamp.Format(ISO8601), entry.Important, entry.Category, entry.Message)
+					if err != nil {
+						log.Fatal(err)
 					}
 
-					if _, err := db.Exec(insert_entry, entry.ID, entry.Timestamp.Format(ISO8601), entry.Important, entry.Category, entry.Message); err != nil {
-						log.Fatal(err)
-						return err
-					}
-					fmt.Printf("%v\t%v\t%v  [%v]\t\t'%v'\n", entry.Timestamp.Format(ISO8601), entry.ID, importantIndicator, entry.Category, entry.Message)
+					fmt.Println(entry)
 					return nil
 				},
 				Flags: []cli.Flag{
@@ -117,7 +126,7 @@ func main() {
 				Name:  "list",
 				Usage: "Show recorded entries",
 				Action: func(ctx *cli.Context) error {
-					rows, err := db.Query(list_sorted)
+					rows, err := db.Query(listStmt)
 					if err != nil {
 						return err
 					}
@@ -130,11 +139,9 @@ func main() {
 							return err
 						}
 
-						importantIndicator := " "
-						if entry.Important {
-							importantIndicator = "*"
+						fmt.Println(entry)
+
 						}
-						fmt.Printf("%v\t%v\t%v  [%v]\t\t'%v'\n", entry.Timestamp.Format(ISO8601), entry.ID, importantIndicator, entry.Category, entry.Message)
 					}
 
 					return nil
