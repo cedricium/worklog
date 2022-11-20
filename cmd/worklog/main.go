@@ -15,6 +15,8 @@ import (
 
 const ISO8601 string = "2006-01-02 15:04:05"
 
+var categories []string = []string{"bug", "feature", "fix", "meeting", "note", "refactor"}
+
 type Entry struct {
 	ID        string
 	Timestamp time.Time
@@ -55,26 +57,21 @@ undone. If you wish to proceed, please type 'continue':
 > `
 )
 
-func main() {
+func configureAndSetupDB() (db *sql.DB) {
 	db, err := sql.Open("sqlite3", dbFile)
 	if err != nil {
 		log.Fatal(err)
 	}
-	defer db.Close()
 
 	_, err = db.Exec(initializeStmt)
 	if err != nil {
 		log.Fatal(err)
 	}
+	return db
+}
 
-	categories := []string{"bug", "feature", "fix", "meeting", "note", "refactor"}
-
-	app := &cli.App{
-		Usage:                  "An opinionated note-taking tool for the developer's day-to-day.",
-		Version:                "0.0.1",
-		UseShortOptionHandling: true,
-	}
-	app.Commands = []*cli.Command{
+func configureCommands(db *sql.DB) []*cli.Command {
+	return []*cli.Command{
 		{
 			Name:  "add",
 			Usage: "Add entries to the log",
@@ -87,9 +84,8 @@ func main() {
 					Message:   c.String("message"),
 				}
 
-				_, err = db.Exec(insertStmt, entry.ID, entry.Timestamp.Format(ISO8601),
-					entry.Important, entry.Category, entry.Message)
-				if err != nil {
+				if _, err := db.Exec(insertStmt, entry.ID, entry.Timestamp.Format(ISO8601),
+					entry.Important, entry.Category, entry.Message); err != nil {
 					log.Fatal(err)
 				}
 
@@ -139,9 +135,8 @@ func main() {
 
 				for rows.Next() {
 					entry := Entry{}
-					err = rows.Scan(&entry.ID, &entry.Timestamp, &entry.Important,
-						&entry.Category, &entry.Message)
-					if err != nil {
+					if err := rows.Scan(&entry.ID, &entry.Timestamp, &entry.Important,
+						&entry.Category, &entry.Message); err != nil {
 						return err
 					}
 
@@ -174,14 +169,25 @@ func main() {
 					}
 				}
 
-				_, err = db.Exec(clearStmt)
-				if err != nil {
+				if _, err := db.Exec(clearStmt); err != nil {
 					log.Fatal(err)
 				}
 
 				return nil
 			},
-		},
+		}}
+}
+
+func main() {
+	db := configureAndSetupDB()
+	defer db.Close()
+
+	app := &cli.App{
+		Name:                   "worklog",
+		Usage:                  "An opinionated note-taking tool for the developer's day-to-day.",
+		Version:                "0.0.1",
+		UseShortOptionHandling: true,
+		Commands:               configureCommands(db),
 	}
 
 	if err := app.Run(os.Args); err != nil {
