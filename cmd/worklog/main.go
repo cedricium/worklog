@@ -65,6 +65,7 @@ func configureCommands(client *client.Entries) []*cli.Command {
 								return nil
 							}
 						}
+
 						return fmt.Errorf("flag category value '%v' is not valid. options are: %v",
 							input, categoriesString)
 					},

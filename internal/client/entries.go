@@ -30,8 +30,7 @@ const (
 
 func (client *Entries) Initialize() error {
 	worklogDataDir := path.Join(os.Getenv("HOME"), ".local", "share", "worklog")
-	_, err := os.Stat(worklogDataDir)
-	if os.IsNotExist(err) {
+	if _, err := os.Stat(worklogDataDir); os.IsNotExist(err) {
 		os.Mkdir(worklogDataDir, 0755)
 	}
 
@@ -40,8 +39,7 @@ func (client *Entries) Initialize() error {
 		return err
 	}
 
-	_, err = db.Exec(initializeStmt)
-	if err != nil {
+	if _, err = db.Exec(initializeStmt); err != nil {
 		return err
 	}
 
