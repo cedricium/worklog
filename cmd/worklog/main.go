@@ -1,49 +1,50 @@
 package main
 
 import (
+	"cedricium/worklog"
+	"cedricium/worklog/internal/client"
 	"fmt"
 	"log"
 	"os"
 	"strings"
 	"time"
 
-	_ "github.com/mattn/go-sqlite3"
+	"github.com/teris-io/shortid"
 	"github.com/urfave/cli/v2"
 )
 
 const (
-	ISO8601         string = "2006-01-02 15:04:05"
 	EMPTY_ARG_USAGE string = " "
+	CLEAR_WARNING   string = `CAUTION! This is a destructive action and connect be
+undone. To proceed, type 'continue' or 'q' to quit:
+
+> `
 )
 
 var categories []string = []string{"bug", "feature", "fix", "meeting", "note", "refactor"}
+var categoriesString string = "[" + strings.Join(categories, "|") + "]"
 
-type Entry struct {
-	ID        string
-	Timestamp time.Time
-	Important bool
-	Category  string
-	Message   string
-}
-
-func (entry Entry) String() string {
-	importantIndicator := " "
-	if entry.Important {
-		importantIndicator = "*"
-	}
-
-	return fmt.Sprintf("%v\t%v\t%v  [%v]\t'%v'", entry.Timestamp.Format(ISO8601),
-		entry.ID, importantIndicator, entry.Category, entry.Message)
-}
-
-func configureCommands(client *Client) []*cli.Command {
+func configureCommands(client *client.Entries) []*cli.Command {
 	return []*cli.Command{
 		{
 			Name:      "add",
 			Usage:     "Add entries to the log",
 			ArgsUsage: EMPTY_ARG_USAGE,
 			Action: func(ctx *cli.Context) error {
-				return client.Add(ctx)
+				entry := worklog.Entry{
+					ID:        shortid.MustGenerate(),
+					Timestamp: time.Now(),
+					Category:  ctx.String("category"),
+					Important: ctx.Bool("important"),
+					Message:   ctx.String("message"),
+				}
+
+				if err := client.Add(entry); err != nil {
+					return err
+				}
+
+				fmt.Println(entry)
+				return nil
 			},
 			Flags: []cli.Flag{
 				&cli.StringFlag{
@@ -56,7 +57,7 @@ func configureCommands(client *Client) []*cli.Command {
 					Name:    "category",
 					Aliases: []string{"c"},
 					Usage: fmt.Sprintf("Choose a category for the entry. `TAG` must be one of: %v",
-						"["+strings.Join(categories, "|")+"]"),
+						categoriesString),
 					Value: "note",
 					Action: func(ctx *cli.Context, input string) error {
 						for _, valid := range categories {
@@ -65,7 +66,7 @@ func configureCommands(client *Client) []*cli.Command {
 							}
 						}
 						return fmt.Errorf("flag category value '%v' is not valid. options are: %v",
-							input, "["+strings.Join(categories, "|")+"]")
+							input, categoriesString)
 					},
 				},
 				&cli.BoolFlag{
@@ -81,7 +82,16 @@ func configureCommands(client *Client) []*cli.Command {
 			Usage:     "Show recorded entries",
 			ArgsUsage: EMPTY_ARG_USAGE,
 			Action: func(ctx *cli.Context) error {
-				return client.List(ctx)
+				entries := []worklog.Entry{}
+
+				if err := client.List(&entries); err != nil {
+					return nil
+				}
+
+				for _, entry := range entries {
+					fmt.Println(entry)
+				}
+				return nil
 			},
 		},
 		{
@@ -97,13 +107,34 @@ func configureCommands(client *Client) []*cli.Command {
 				},
 			},
 			Action: func(ctx *cli.Context) error {
-				return client.Clear(ctx)
+				force := ctx.Bool("force")
+				if !force {
+					fmt.Print(CLEAR_WARNING)
+
+					var input string
+					fmt.Scanln(&input)
+
+					switch input {
+					case "q", "quit":
+						return nil
+					case "continue":
+						break
+					default:
+						return fmt.Errorf("input value '%v' does not match 'continue'", input)
+					}
+				}
+
+				if err := client.Clear(); err != nil {
+					return err
+				}
+
+				return nil
 			},
 		}}
 }
 
 func main() {
-	client := Client{}
+	client := client.Entries{}
 	if err := client.Initialize(); err != nil {
 		log.Fatal(err)
 	}
