@@ -1,4 +1,4 @@
-module cedricium/worklog
+module github.com/cedricium/worklog
 
 go 1.19
 

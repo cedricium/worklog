@@ -1,4 +1,4 @@
-.PHONY: all clean
+.PHONY: all clean install
 
 all: clean worklog
 
@@ -7,3 +7,6 @@ worklog:
 
 clean:
 	@rm -f worklog
+
+install:
+	@go build -o ${GOPATH}/bin/worklog ./cmd/worklog

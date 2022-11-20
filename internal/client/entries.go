@@ -1,9 +1,9 @@
 package client
 
 import (
-	"cedricium/worklog"
 	"database/sql"
 
+	"github.com/cedricium/worklog"
 	_ "github.com/mattn/go-sqlite3"
 )
 

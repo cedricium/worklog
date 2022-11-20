@@ -1,14 +1,14 @@
 package main
 
 import (
-	"cedricium/worklog"
-	"cedricium/worklog/internal/client"
 	"fmt"
 	"log"
 	"os"
 	"strings"
 	"time"
 
+	"github.com/cedricium/worklog"
+	"github.com/cedricium/worklog/internal/client"
 	"github.com/teris-io/shortid"
 	"github.com/urfave/cli/v2"
 )
