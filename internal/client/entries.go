@@ -2,6 +2,8 @@ package client
 
 import (
 	"database/sql"
+	"os"
+	"path"
 
 	"github.com/cedricium/worklog"
 	_ "github.com/mattn/go-sqlite3"
@@ -27,7 +29,13 @@ const (
 )
 
 func (client *Entries) Initialize() error {
-	db, err := sql.Open("sqlite3", dbFile)
+	worklogDataDir := path.Join(os.Getenv("HOME"), ".local", "share", "worklog")
+	_, err := os.Stat(worklogDataDir)
+	if os.IsNotExist(err) {
+		os.Mkdir(worklogDataDir, 0755)
+	}
+
+	db, err := sql.Open("sqlite3", path.Join(worklogDataDir, dbFile))
 	if err != nil {
 		return err
 	}
@@ -39,20 +47,6 @@ func (client *Entries) Initialize() error {
 
 	client.Database = db
 	return nil
-}
-
-func NewClient() (*Entries, error) {
-	db, err := sql.Open("sqlite3", dbFile)
-	if err != nil {
-		return nil, err
-	}
-
-	_, err = db.Exec(initializeStmt)
-	if err != nil {
-		return nil, err
-	}
-
-	return &Entries{Database: db}, nil
 }
 
 func (client *Entries) Add(entry worklog.Entry) error {

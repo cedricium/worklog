@@ -97,7 +97,7 @@ OPTIONS:
 
 ## TODOs
 
-- [ ] centralize project once installed (e.g. `$HOME/.worklog`) to prevent `worklog.db` being created anywhere command is ran
+- [x] centralize project once installed (e.g. `$HOME/.worklog`) to prevent `worklog.db` being created anywhere command is ran
 - [ ] `worklog list` filtering:
   - filter by categor(y|ies)
   - filter by date (`--after=DATE`, `--before=DATE`)
