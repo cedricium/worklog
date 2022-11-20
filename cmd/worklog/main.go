@@ -140,8 +140,37 @@ func main() {
 						}
 
 						fmt.Println(entry)
+					}
 
+					return nil
+				},
+			},
+			{
+				Name:  "clear",
+				Usage: "Delete all recorded entries",
+				Flags: []cli.Flag{
+					&cli.BoolFlag{
+						Name:    "force",
+						Aliases: []string{"f"},
+						Usage:   "Skip confirmation and forcefully delete all entries.",
+						Value:   false,
+					},
+				},
+				Action: func(ctx *cli.Context) error {
+					force := ctx.Bool("force")
+					if !force {
+						fmt.Print(clearWarning)
+
+						var input string
+						fmt.Scanln(&input)
+						if input != "continue" {
+							return fmt.Errorf("input value '%v' does not match 'continue'", input)
 						}
+					}
+
+					_, err = db.Exec(clearStmt)
+					if err != nil {
+						log.Fatal(err)
 					}
 
 					return nil
