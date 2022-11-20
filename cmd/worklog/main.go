@@ -29,18 +29,19 @@ func (entry Entry) String() string {
 		importantIndicator = "*"
 	}
 
-	return fmt.Sprintf("%v\t%v\t%v  [%v]\t'%v'", entry.Timestamp.Format(ISO8601), entry.ID, importantIndicator, entry.Category, entry.Message)
+	return fmt.Sprintf("%v\t%v\t%v  [%v]\t'%v'", entry.Timestamp.Format(ISO8601),
+		entry.ID, importantIndicator, entry.Category, entry.Message)
 }
 
 const (
 	dbFile string = "worklog.db"
 
 	initializeStmt string = `CREATE TABLE IF NOT EXISTS entries (
-	id 				TEXT NOT NULL PRIMARY KEY,
+	id TEXT NOT NULL PRIMARY KEY,
 	timestamp DATETIME NOT NULL,
 	important INTEGER NOT NULL DEFAULT 0,
-	category 	TEXT NOT NULL DEFAULT 'note',
-	message 	TEXT NOT NULL
+	category TEXT NOT NULL DEFAULT 'note',
+	message TEXT NOT NULL
 );`
 	insertStmt string = `INSERT INTO entries(id, timestamp, important, category, message) values(?, ?, ?, ?, ?);`
 	listStmt   string = `SELECT * FROM entries ORDER BY timestamp DESC;`
@@ -85,7 +86,8 @@ func main() {
 						Message:   c.String("message"),
 					}
 
-					_, err = db.Exec(insertStmt, entry.ID, entry.Timestamp.Format(ISO8601), entry.Important, entry.Category, entry.Message)
+					_, err = db.Exec(insertStmt, entry.ID, entry.Timestamp.Format(ISO8601),
+						entry.Important, entry.Category, entry.Message)
 					if err != nil {
 						log.Fatal(err)
 					}
@@ -103,15 +105,17 @@ func main() {
 					&cli.StringFlag{
 						Name:    "category",
 						Aliases: []string{"c"},
-						Usage:   fmt.Sprintf("Choose a category for the entry. `TAG` must be one of: %v", "["+strings.Join(categories, "|")+"]"),
-						Value:   "note",
+						Usage: fmt.Sprintf("Choose a category for the entry. `TAG` must be one of: %v",
+							"["+strings.Join(categories, "|")+"]"),
+						Value: "note",
 						Action: func(ctx *cli.Context, input string) error {
 							for _, valid := range categories {
 								if input == valid {
 									return nil
 								}
 							}
-							return fmt.Errorf("flag category value '%v' is not valid. options are: %v", input, "["+strings.Join(categories, "|")+"]")
+							return fmt.Errorf("flag category value '%v' is not valid. options are: %v",
+								input, "["+strings.Join(categories, "|")+"]")
 						},
 					},
 					&cli.BoolFlag{
@@ -134,7 +138,8 @@ func main() {
 
 					for rows.Next() {
 						entry := Entry{}
-						err = rows.Scan(&entry.ID, &entry.Timestamp, &entry.Important, &entry.Category, &entry.Message)
+						err = rows.Scan(&entry.ID, &entry.Timestamp, &entry.Important,
+							&entry.Category, &entry.Message)
 						if err != nil {
 							return err
 						}
