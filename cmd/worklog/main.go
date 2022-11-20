@@ -11,7 +11,10 @@ import (
 	"github.com/urfave/cli/v2"
 )
 
-const ISO8601 string = "2006-01-02 15:04:05"
+const (
+	ISO8601         string = "2006-01-02 15:04:05"
+	EMPTY_ARG_USAGE string = " "
+)
 
 var categories []string = []string{"bug", "feature", "fix", "meeting", "note", "refactor"}
 
@@ -36,8 +39,9 @@ func (entry Entry) String() string {
 func configureCommands(client *Client) []*cli.Command {
 	return []*cli.Command{
 		{
-			Name:  "add",
-			Usage: "Add entries to the log",
+			Name:      "add",
+			Usage:     "Add entries to the log",
+			ArgsUsage: EMPTY_ARG_USAGE,
 			Action: func(ctx *cli.Context) error {
 				return client.Add(ctx)
 			},
@@ -73,15 +77,17 @@ func configureCommands(client *Client) []*cli.Command {
 			},
 		},
 		{
-			Name:  "list",
-			Usage: "Show recorded entries",
+			Name:      "list",
+			Usage:     "Show recorded entries",
+			ArgsUsage: EMPTY_ARG_USAGE,
 			Action: func(ctx *cli.Context) error {
 				return client.List(ctx)
 			},
 		},
 		{
-			Name:  "clear",
-			Usage: "Delete all recorded entries",
+			Name:      "clear",
+			Usage:     "Delete all recorded entries",
+			ArgsUsage: EMPTY_ARG_USAGE,
 			Flags: []cli.Flag{
 				&cli.BoolFlag{
 					Name:    "force",
@@ -106,6 +112,7 @@ func main() {
 	app := &cli.App{
 		Name:                   "worklog",
 		Usage:                  "An opinionated note-taking tool for the developer's day-to-day.",
+		ArgsUsage:              EMPTY_ARG_USAGE,
 		Version:                "0.0.1",
 		UseShortOptionHandling: true,
 		Commands:               configureCommands(&client),
