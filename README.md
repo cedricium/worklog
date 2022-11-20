@@ -20,32 +20,9 @@ We can use `make` to run common/frequent commands, such as building an executabl
 $ make
 ```
 
-This will compile an up-to-date executable called `worklog` in the root directory based on the latest code changes from `cmd/worklog/main.go`. To use, see next section.
+This will compile an up-to-date executable called `worklog` in the root directory based on the latest code changes from across the project (`worklog.go`, `internal/client`, `cmd/worklog`). To use, see next section.
 
-### Run
-
-```console
-$ ./worklog
-NAME:
-   worklog - An opinionated note-taking tool for the developer's day-to-day.
-
-USAGE:
-   worklog [global options] command [command options] [arguments...]
-
-VERSION:
-   0.0.1
-
-COMMANDS:
-   add      Add entries to the log
-   list     Show recorded entries
-   help, h  Shows a list of commands or help for one command
-
-GLOBAL OPTIONS:
-   --help, -h     show help (default: false)
-   --version, -v  print the version (default: false)
-```
-
-## Desired Usage
+## Usage
 
 This is a work-in-progress and currently being used to drive development. Very likely to change in the future.
 
@@ -53,11 +30,24 @@ This is a work-in-progress and currently being used to drive development. Very l
 
 ```console
 $ worklog --help
-usage: worklog [--help] <command> [<options>]
+NAME:
+   worklog - An opinionated note-taking tool for the developer's day-to-day.
 
-COMMANDS
-  add   add entries to the log
-  list  show recorded entries
+USAGE:
+   worklog [global options] command [command options]
+
+VERSION:
+   0.0.1
+
+COMMANDS:
+   add      Add entries to the log
+   list     Show recorded entries
+   clear    Delete all recorded entries
+   help, h  Shows a list of commands or help for one command
+
+GLOBAL OPTIONS:
+   --help, -h     show help (default: false)
+   --version, -v  print the version (default: false)
 ```
 
 ### `$ worklog add`
@@ -65,41 +55,21 @@ COMMANDS
 Add entries to the log.
 
 ```console
+$ worklog add -im "got the project packaged" -c feature
+2022-11-20 11:39:26	z5DWk2OVR	*  [feature]	'got the project packaged'
+
 $ worklog add --help
+NAME:
+   worklog add - Add entries to the log
 
-EXAMPLES
-  $ worklog add -m "struggling with GraphQL"
-  $ worklog add -c fix -im "solved the >1000 RPCs causing Twitter being slow"
+USAGE:
+   worklog add [command options]
 
-OPTIONS
-  -m, --message=<MSG>
-    Use the given <MSG> as the entry body. No limit on length for now, though
-    ideally should be kept short (think tweet size).
-
-  -c, --category={bug|fix|feature|meeting|note|refactor}
-    Choose a category for the entry. Variants are as follows:
-
-    bug
-      For documenting currently-unresolved issues within the codebase.
-
-    feature
-      New development work.
-
-    fix
-      Work that solves previous issues.
-
-    meeting
-      Helpful for remembering key takeaways/outcomes.
-
-    note (default)
-      General-purpose entry, useful for note-taking.
-
-    refactor
-      Legacy code rewrites or code improvements/enhancements.
-
-  -i, --important
-    Mark/flag the entry as important. Useful if entry is a known "big-deal" and
-    warrants special attention when reviewing entries later.
+OPTIONS:
+   --message MSG, -m MSG   Use the given MSG as the entry body
+   --category TAG, -c TAG  Choose a category for the entry. TAG must be one of: [bug|feature|fix|meeting|note|refactor] (default: "note")
+   --important, -i         Mark/flag the entry as important (default: false)
+   --help, -h              show help (default: false)
 ```
 
 ### `$ worklog list`
@@ -107,29 +77,26 @@ OPTIONS
 Show recorded entries. Current idea is for output to look similar to `git log`.
 
 ```console
+$ worklog list
+2022-11-20 11:39:26	z5DWk2OVR	*  [feature]	'got the project packaged'
+2022-11-19 19:01:50	ul-RHcdVR	   [refactor]	'starting to see worklog-package structure'
+2022-11-19 19:01:12	Vu2eScO4g	*  [fix]	'got clear working finally'
+2022-11-19 19:00:44	uDa3ScO4g	*  [feature]	'testing none defaults'
+2022-11-19 19:00:35	zGd3S5OVR	   [note]	'adding entries from cli'
+
 $ worklog list --help
+NAME:
+   worklog list - Show recorded entries
 
-EXAMPLES
-  $ worklog list
-  $ worklog list --before="2022-01-01"
-  $ worklog list --filter=FGR --after="2022-06-05"
+USAGE:
+   worklog list [command options]
 
-OPTIONS
-  -f, --filter=[(B|F|G|M|N|R|I)…[*]]
-    Select only entries that are categorized:
-      bugs (B)
-      fixes (F)
-      features (G)
-      meetings (M)
-      note (N)
-      refactors (R)
-      important (I)
-
-  -a, --after=<date>
-  -s, --since=<date>
-    Show entries newer than the given date. Requires ISO 8601-like date string.
-
-  -b, --before=<date>
-  -u, --until=<date>
-    Show entries older than the given date. Requires ISO 8601-like date string.
+OPTIONS:
+   --help, -h  show help (default: false)
 ```
+
+## TODOs
+
+- [ ] `worklog list` filtering:
+  - filter by categor(y|ies)
+  - filter by date (`--after=DATE`, `--before=DATE`)
