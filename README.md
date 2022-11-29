@@ -100,6 +100,7 @@ OPTIONS:
 ## TODOs
 
 - [x] centralize project once installed (e.g. `$HOME/.worklog`) to prevent `worklog.db` being created anywhere command is ran
-- [ ] `worklog list` filtering:
-  - [ ] filter by categor(y|ies)
+- [x] `worklog list` filtering:
+  - [x] filter by categor(y|ies)
   - [x] filter by date (`--after=DATE`, `--before=DATE`)
+- [ ] validate `--after`, `--before` dates are ISO8601 instead of simply checking string length

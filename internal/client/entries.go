@@ -14,20 +14,10 @@ type Entries struct {
 	Database *sql.DB
 }
 
-type ListFilters struct {
-	After  string
-	Before string
-	/*
-		TODO: implement filtering based on array of chars mapping to categories, e.g.
-		{"B": "bugs"}
-		{"F": "features"}
-		{"R": "fix/(repair)"}
-		{"M": "meeting"}
-		{"N": "note"}
-		{"C": "refactor/(cleanup)"}
-		{"I": "important"}
-		// categories string
-	*/
+type ListConditions struct {
+	After   string
+	Before  string
+	Filters string
 }
 
 const (
@@ -70,13 +60,39 @@ func (client *Entries) Add(entry worklog.Entry) error {
 	return nil
 }
 
-func (client *Entries) List(entries *[]worklog.Entry, filters ListFilters) error {
+func (client *Entries) List(entries *[]worklog.Entry, conds ListConditions) error {
 	exp := sq.Select("*").From("entries").OrderBy("timestamp DESC")
-	if len(filters.After) > 0 {
-		exp = exp.Where(sq.Gt{"timestamp": filters.After})
+	if len(conds.After) > 0 {
+		exp = exp.Where(sq.Gt{"timestamp": conds.After})
 	}
-	if len(filters.Before) > 0 {
-		exp = exp.Where(sq.Lt{"timestamp": filters.Before})
+	if len(conds.Before) > 0 {
+		exp = exp.Where(sq.Lt{"timestamp": conds.Before})
+	}
+
+	contains := []string{}
+	for _, char := range conds.Filters {
+		switch char {
+		// special case for filtering by `important` entries,
+		// irrelevant to proceeding category filtering
+		case 'I':
+			exp = exp.Where(sq.Eq{"important": true})
+
+		case 'B':
+			contains = append(contains, "bug")
+		case 'F':
+			contains = append(contains, "feature")
+		case 'R':
+			contains = append(contains, "fix")
+		case 'M':
+			contains = append(contains, "meeting")
+		case 'N':
+			contains = append(contains, "note")
+		case 'C':
+			contains = append(contains, "refactor")
+		}
+	}
+	if len(contains) > 0 {
+		exp = exp.Where(sq.Eq{"category": contains})
 	}
 
 	rows, err := exp.RunWith(client.Database).Query()

@@ -21,8 +21,7 @@ undone. To proceed, type 'continue' or 'q' to quit:
 > `
 )
 
-var categories []string = []string{"bug", "feature", "fix", "meeting", "note", "refactor"}
-var categoriesString string = "[" + strings.Join(categories, "|") + "]"
+var CATEGORIES []string = []string{"bug", "feature", "fix", "meeting", "note", "refactor"}
 
 func configureCommands(entriesClient *client.Entries) []*cli.Command {
 	return []*cli.Command{
@@ -56,18 +55,18 @@ func configureCommands(entriesClient *client.Entries) []*cli.Command {
 				&cli.StringFlag{
 					Name:    "category",
 					Aliases: []string{"c"},
-					Usage: fmt.Sprintf("Choose a category for the entry. `TAG` must be one of: %v",
-						categoriesString),
+					Usage: `Choose a category for the entry. 'TAG' must be one of:
+		[bug|feature|fix|meeting|note|refactor]`,
 					Value: "note",
 					Action: func(ctx *cli.Context, input string) error {
-						for _, valid := range categories {
+						for _, valid := range CATEGORIES {
 							if input == valid {
 								return nil
 							}
 						}
 
 						return fmt.Errorf("flag category value '%v' is not valid. options are: %v",
-							input, categoriesString)
+							input, "["+strings.Join(CATEGORIES, "|")+"]")
 					},
 				},
 				&cli.BoolFlag{
@@ -85,11 +84,12 @@ func configureCommands(entriesClient *client.Entries) []*cli.Command {
 			Action: func(ctx *cli.Context) error {
 				after := ctx.String("after")
 				before := ctx.String("before")
+				filters := ctx.String("filter")
 
 				entries := []worklog.Entry{}
-				filters := client.ListFilters{After: after, Before: before}
+				conditions := client.ListConditions{After: after, Before: before, Filters: filters}
 
-				if err := entriesClient.List(&entries, filters); err != nil {
+				if err := entriesClient.List(&entries, conditions); err != nil {
 					return nil
 				}
 
@@ -108,6 +108,18 @@ func configureCommands(entriesClient *client.Entries) []*cli.Command {
 					Name:    "before",
 					Aliases: []string{"b", "until"},
 					Usage:   "Show entries older than given `DATE`.",
+				},
+				&cli.StringFlag{
+					Name:    "filter",
+					Aliases: []string{"f"},
+					Usage: `Select only entries that are categorized:
+		I marked important
+		B bugs
+		F features
+		R repairs/fixes
+		M meetings
+		N notes
+		C cleanups/refactors`,
 				},
 			},
 		},
