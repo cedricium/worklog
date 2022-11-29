@@ -46,8 +46,8 @@ COMMANDS:
    help, h  Shows a list of commands or help for one command
 
 GLOBAL OPTIONS:
-   --help, -h     show help (default: false)
-   --version, -v  print the version (default: false)
+   -h, --help     show help (default: false)
+   -v, --version  print the version (default: false)
 ```
 
 ### `$ worklog add`
@@ -66,10 +66,10 @@ USAGE:
    worklog add [command options]
 
 OPTIONS:
-   --message MSG, -m MSG   Use the given MSG as the entry body
-   --category TAG, -c TAG  Choose a category for the entry. TAG must be one of: [bug|feature|fix|meeting|note|refactor] (default: "note")
-   --important, -i         Mark/flag the entry as important (default: false)
-   --help, -h              show help (default: false)
+   -m MSG, --message MSG   Use the given MSG as the entry body
+   -c TAG, --category TAG  Choose a category for the entry. TAG must be one of: [bug|feature|fix|meeting|note|refactor] (default: "note")
+   -i, --important         Mark/flag the entry as important (default: false)
+   -h, --help              show help (default: false)
 ```
 
 ### `$ worklog list`
@@ -92,7 +92,9 @@ USAGE:
    worklog list [command options]
 
 OPTIONS:
-   --help, -h  show help (default: false)
+   -a DATE, --after DATE, --since DATE   Show entries newer than given DATE.
+   -b DATE, --before DATE, --until DATE  Show entries older than given DATE.
+   -h, --help                            show help (default: false)
 ```
 
 ## TODOs
