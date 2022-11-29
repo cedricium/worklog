@@ -66,10 +66,11 @@ USAGE:
    worklog add [command options]
 
 OPTIONS:
-   -m MSG, --message MSG   Use the given MSG as the entry body
-   -c TAG, --category TAG  Choose a category for the entry. TAG must be one of: [bug|feature|fix|meeting|note|refactor] (default: "note")
-   -i, --important         Mark/flag the entry as important (default: false)
-   -h, --help              show help (default: false)
+   -m MSG, --message MSG       Use the given MSG as the entry body
+   -c value, --category value  Choose a category for the entry. Value must be one of:
+                                 [bug|feature|fix|meeting|note|refactor] (default: "note")
+   -i, --important             Mark/flag the entry as important (default: false)
+   -h, --help                  show help (default: false)
 ```
 
 ### `$ worklog list`
@@ -94,6 +95,14 @@ USAGE:
 OPTIONS:
    -a DATE, --after DATE, --since DATE   Show entries newer than given DATE.
    -b DATE, --before DATE, --until DATE  Show entries older than given DATE.
+   -f value, --filter value              Select only entries that are categorized:
+                                           I marked important
+                                           B bugs
+                                           F features
+                                           R repairs/fixes
+                                           M meetings
+                                           N notes
+                                           C cleanups/refactors
    -h, --help                            show help (default: false)
 ```
 

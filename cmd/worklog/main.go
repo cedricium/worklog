@@ -55,7 +55,7 @@ func configureCommands(entriesClient *client.Entries) []*cli.Command {
 				&cli.StringFlag{
 					Name:    "category",
 					Aliases: []string{"c"},
-					Usage: `Choose a category for the entry. 'TAG' must be one of:
+					Usage: `Choose a category for the entry. 'value' must be one of:
 		[bug|feature|fix|meeting|note|refactor]`,
 					Value: "note",
 					Action: func(ctx *cli.Context, input string) error {
