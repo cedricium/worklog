@@ -99,5 +99,5 @@ OPTIONS:
 
 - [x] centralize project once installed (e.g. `$HOME/.worklog`) to prevent `worklog.db` being created anywhere command is ran
 - [ ] `worklog list` filtering:
-  - filter by categor(y|ies)
-  - filter by date (`--after=DATE`, `--before=DATE`)
+  - [ ] filter by categor(y|ies)
+  - [x] filter by date (`--after=DATE`, `--before=DATE`)

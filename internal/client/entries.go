@@ -5,12 +5,29 @@ import (
 	"os"
 	"path"
 
+	sq "github.com/Masterminds/squirrel"
 	"github.com/cedricium/worklog"
 	_ "github.com/mattn/go-sqlite3"
 )
 
 type Entries struct {
 	Database *sql.DB
+}
+
+type ListFilters struct {
+	After  string
+	Before string
+	/*
+		TODO: implement filtering based on array of chars mapping to categories, e.g.
+		{"B": "bugs"}
+		{"F": "features"}
+		{"R": "fix/(repair)"}
+		{"M": "meeting"}
+		{"N": "note"}
+		{"C": "refactor/(cleanup)"}
+		{"I": "important"}
+		// categories string
+	*/
 }
 
 const (
@@ -23,9 +40,6 @@ const (
 	category TEXT NOT NULL DEFAULT 'note',
 	message TEXT NOT NULL
 );`
-	insertStmt string = `INSERT INTO entries(id, timestamp, important, category, message) values(?, ?, ?, ?, ?);`
-	listStmt   string = `SELECT * FROM entries ORDER BY timestamp DESC;`
-	clearStmt  string = `DELETE FROM entries;`
 )
 
 func (client *Entries) Initialize() error {
@@ -48,16 +62,24 @@ func (client *Entries) Initialize() error {
 }
 
 func (client *Entries) Add(entry worklog.Entry) error {
-	if _, err := client.Database.Exec(insertStmt, entry.ID, entry.Timestamp.Format(worklog.ISO8601),
-		entry.Important, entry.Category, entry.Message); err != nil {
+	if _, err := sq.Insert("entries").Values(entry.ID, entry.Timestamp.Format(worklog.ISO8601),
+		entry.Important, entry.Category, entry.Message).RunWith(client.Database).Exec(); err != nil {
 		return err
 	}
 
 	return nil
 }
 
-func (client *Entries) List(entries *[]worklog.Entry) error {
-	rows, err := client.Database.Query(listStmt)
+func (client *Entries) List(entries *[]worklog.Entry, filters ListFilters) error {
+	exp := sq.Select("*").From("entries").OrderBy("timestamp DESC")
+	if len(filters.After) > 0 {
+		exp = exp.Where(sq.Gt{"timestamp": filters.After})
+	}
+	if len(filters.Before) > 0 {
+		exp = exp.Where(sq.Lt{"timestamp": filters.Before})
+	}
+
+	rows, err := exp.RunWith(client.Database).Query()
 	if err != nil {
 		return err
 	}
@@ -77,7 +99,7 @@ func (client *Entries) List(entries *[]worklog.Entry) error {
 }
 
 func (client *Entries) Clear() error {
-	if _, err := client.Database.Exec(clearStmt); err != nil {
+	if _, err := sq.Delete("entries").RunWith(client.Database).Exec(); err != nil {
 		return err
 	}
 

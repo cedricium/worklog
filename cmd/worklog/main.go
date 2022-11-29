@@ -24,7 +24,7 @@ undone. To proceed, type 'continue' or 'q' to quit:
 var categories []string = []string{"bug", "feature", "fix", "meeting", "note", "refactor"}
 var categoriesString string = "[" + strings.Join(categories, "|") + "]"
 
-func configureCommands(client *client.Entries) []*cli.Command {
+func configureCommands(entriesClient *client.Entries) []*cli.Command {
 	return []*cli.Command{
 		{
 			Name:      "add",
@@ -39,7 +39,7 @@ func configureCommands(client *client.Entries) []*cli.Command {
 					Message:   ctx.String("message"),
 				}
 
-				if err := client.Add(entry); err != nil {
+				if err := entriesClient.Add(entry); err != nil {
 					return err
 				}
 
@@ -83,9 +83,13 @@ func configureCommands(client *client.Entries) []*cli.Command {
 			Usage:     "Show recorded entries",
 			ArgsUsage: EMPTY_ARG_USAGE,
 			Action: func(ctx *cli.Context) error {
-				entries := []worklog.Entry{}
+				after := ctx.String("after")
+				before := ctx.String("before")
 
-				if err := client.List(&entries); err != nil {
+				entries := []worklog.Entry{}
+				filters := client.ListFilters{After: after, Before: before}
+
+				if err := entriesClient.List(&entries, filters); err != nil {
 					return nil
 				}
 
@@ -93,6 +97,18 @@ func configureCommands(client *client.Entries) []*cli.Command {
 					fmt.Println(entry)
 				}
 				return nil
+			},
+			Flags: []cli.Flag{
+				&cli.StringFlag{
+					Name:    "after",
+					Aliases: []string{"a", "since"},
+					Usage:   "Show entries newer than given `DATE`.",
+				},
+				&cli.StringFlag{
+					Name:    "before",
+					Aliases: []string{"b", "until"},
+					Usage:   "Show entries older than given `DATE`.",
+				},
 			},
 		},
 		{
@@ -125,7 +141,7 @@ func configureCommands(client *client.Entries) []*cli.Command {
 					}
 				}
 
-				if err := client.Clear(); err != nil {
+				if err := entriesClient.Clear(); err != nil {
 					return err
 				}
 
@@ -135,11 +151,11 @@ func configureCommands(client *client.Entries) []*cli.Command {
 }
 
 func main() {
-	client := client.Entries{}
-	if err := client.Initialize(); err != nil {
+	entriesClient := client.Entries{}
+	if err := entriesClient.Initialize(); err != nil {
 		log.Fatal(err)
 	}
-	defer client.Database.Close()
+	defer entriesClient.Database.Close()
 
 	app := &cli.App{
 		Name:                   "worklog",
@@ -147,7 +163,7 @@ func main() {
 		ArgsUsage:              EMPTY_ARG_USAGE,
 		Version:                "0.0.1",
 		UseShortOptionHandling: true,
-		Commands:               configureCommands(&client),
+		Commands:               configureCommands(&entriesClient),
 	}
 
 	if err := app.Run(os.Args); err != nil {
