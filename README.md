@@ -112,4 +112,5 @@ OPTIONS:
 - [x] `worklog list` filtering:
   - [x] filter by categor(y|ies)
   - [x] filter by date (`--after=DATE`, `--before=DATE`)
-- [ ] validate `--after`, `--before` dates are ISO8601 instead of simply checking string length
+- [ ] ~~validate `--after`, `--before` dates are ISO8601 instead of simply checking string length~~
+  - skipping in favor of current behavior (seemingly random behavior if given DATE string is not ISO 8601-like)
